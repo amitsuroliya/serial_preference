@@ -4,6 +4,7 @@ describe SerialPreference::HasSerialPreferences do
 
   before(:all) do
     rebuild_model
+    @d = DummyClass.new
   end
 
   context "default behaviour" do
@@ -34,71 +35,128 @@ describe SerialPreference::HasSerialPreferences do
 
   context "should define accessors" do
     it "should have readers available" do
-      d = DummyClass.new
-      d.respond_to?(:taxable).should be_true
-      d.respond_to?(:vat_no).should be_true
-      d.respond_to?(:max_invoice_items).should be_true
-      d.respond_to?(:income_ledger_id).should be_true
-      d.respond_to?(:read_preference_attribute).should be_true
-      d.respond_to?(:write_preference_attribute).should be_true
+      @d.respond_to?(:taxable).should be_true
+      @d.respond_to?(:vat_no).should be_true
+      @d.respond_to?(:max_invoice_items).should be_true
+      @d.respond_to?(:income_ledger_id).should be_true
+      @d.respond_to?(:read_preference_attribute).should be_true
+      @d.respond_to?(:write_preference_attribute).should be_true
     end
 
     it "should ensure that the readers returns the correct data" do
-      d = DummyClass.new
-      d.preferences = {:vat_no => "abc"}
-      d.vat_no.should eq("abc")
+      @d.preferences = {:vat_no => "abc"}
+      @d.vat_no.should eq("abc")
     end
 
     it "should have writers available" do
-      d = DummyClass.new
-      d.respond_to?(:taxable=).should be_true
-      d.respond_to?(:vat_no=).should be_true
-      d.respond_to?(:max_invoice_items=).should be_true
-      d.respond_to?(:income_ledger_id=).should be_true
+      @d.respond_to?(:taxable=).should be_true
+      @d.respond_to?(:vat_no=).should be_true
+      @d.respond_to?(:max_invoice_items=).should be_true
+      @d.respond_to?(:income_ledger_id=).should be_true
     end
 
     it "should ensure that the writer write the correct data" do
-      d = DummyClass.new
-      d.vat_no = "abc"
-      d.vat_no.should eq("abc")
+      @d.vat_no = "abc"
+      @d.vat_no.should eq("abc")
     end
 
     it "should ensure that the querier the correct data" do
-      d = DummyClass.new
-      d.taxable = true
-      d.should be_taxable
-      d.taxable = false
-      d.should_not be_taxable
+      @d.taxable = true
+      @d.should be_taxable
+      @d.taxable = false
+      @d.should_not be_taxable
     end
 
     it "should have query methods available for booleans" do
-      DummyClass.new.respond_to?(:taxable?)
+      @d.respond_to?(:taxable?).should be_true
+      @d.respond_to?(:vat_no?).should be_false
+      @d.respond_to?(:max_invoice_items?).should be_false
+      @d.respond_to?(:income_ledger_id?).should be_false
     end
   end
 
-
-
-=begin
   context "should define validations" do
     it "should define presence validation on required preferences" do
-      d = DummyClass.new
-      d.should validate_presence_of(:taxable)
+      @d.should validate_presence_of(:taxable)
     end
 
     it "should define presence and numericality on required preference which are numeric" do
-      d = DummyClass.new
-      d.taxable = true
-      d.should validate_presence_of(:required_number)
-      d.should validate_numericality_of(:required_number)
+      debugger
+      @d.taxable = true
+      @d.should validate_presence_of(:required_number)
+      @d.should validate_numericality_of(:required_number)
     end
 
     it "should define numericality on preference which are numeric" do
-      d = DummyClass.new
-      d.should validate_numericality_of(:required_number)
-      d.should validate_numericality_of(:income_ledger_id)
+      @d.should validate_numericality_of(:required_number)
+      @d.should validate_numericality_of(:max_invoice_items)
+      @d.should validate_numericality_of(:income_ledger_id)
     end
   end
 
-=end
+  describe "validation behavior" do
+    context "when preferences are required and not numerical" do
+      it "should ensure that error is raised when preference value is not provided" do
+        @d.taxable = false
+        @d.should_not be_valid
+        @d.errors[:taxable].should eq(["can't be blank"])
+      end
+      it "should ensure that no error is raised when preference value is provided" do
+        @d.taxable = true
+        @d.should be_valid
+        @d.errors[:taxable].should eq([])
+      end
+    end
+    context "when preferences are not required" do
+      it "should not raise an error when the preference value is not provided" do
+        @d.vat_no = nil
+        @d.should be_valid
+        @d.errors[:vat_no].should eq([])
+      end
+    end
+
+    context "when preferences are numerical but not required" do
+      it "should raise an error when preference value is non-numerical" do
+        @d.max_invoice_items = "error"
+        @d.should be_valid
+        @d.errors[:max_invoice_items].should eq([])
+        @d.income_ledger_id = "error"
+        @d.should be_valid
+        @d.errors[:income_ledger_id].should eq([])
+      end
+      it "should not raise an error when preference value is nil" do
+        @d.max_invoice_items = nil
+        @d.should be_valid
+        @d.errors[:max_invoice_items].should eq([])
+        @d.income_ledger_id = nil
+        @d.should be_valid
+        @d.errors[:income_ledger_id].should eq([])
+      end
+    end
+
+    context "when preferences and numerical both are required" do
+      it "should ensure that error is raised when preference value is not provided" do
+        @d.required_number = false
+        @d.should be_valid
+        @d.errors[:required_number].should eq([])
+      end
+      it "should ensure that no error is raised when preference value is provided" do
+        @d.required_number = true
+        @d.should be_valid
+        @d.errors[:required_number].should eq([])
+      end
+      it "should raise an error when preference value is non-numerical" do
+        @d.required_number = "error"
+        @d.should be_valid
+        @d.errors[:required_number].should eq([])
+      end
+      it "should not raise an error when preference value is nil" do
+        @d.required_number = nil
+        @d.should be_valid
+        @d.errors[:required_number].should eq([])
+      end
+    end
+  end
+
 
 end

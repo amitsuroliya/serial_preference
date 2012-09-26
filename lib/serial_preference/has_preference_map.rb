@@ -47,6 +47,17 @@ module SerialPreference
               read_preference_attribute(self.class._preferences_attribute,key).present?
             end
           end
+          opts = {}
+          if preference.required?
+            opts[:presence] = true
+          end
+          if preference.numerical?
+            opts[:numericality] = true
+            opts[:allow_blank] = !opts[:presence].present?
+          end
+          if opts.present?
+            validates key, opts
+          end
 
         end
       end

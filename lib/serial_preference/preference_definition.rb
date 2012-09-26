@@ -56,6 +56,7 @@ module SerialPreference
     end
 
     def value(v)
+      debugger
       v = v.nil? ? default : v
       if !v.nil?
         case data_type
